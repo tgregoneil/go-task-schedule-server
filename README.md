@@ -80,6 +80,12 @@ PORT=4000 HOST=127.0.0.1 node index.js
 API_KEY=your-secret-key node index.js
 ```
 
+## Watch live in your browser
+
+The server includes a static dashboard at `/` that subscribes to a Server-Sent Events stream of task run results — every time a scheduled or manually triggered task completes, its output appears in the page automatically.
+
+Open `http://localhost:3000` (or `http://<lan-ip>:3000`) in any modern browser. The page authenticates the SSE connection via the `?key=` query string — change the API key field at the top of the page if you've set a custom `API_KEY`.
+
 ## Test: exercise REST interface
 
 ### Shorthand setup
@@ -338,6 +344,7 @@ They're not substitutes — and nothing stops you using both.
 | `PATCH` | `/tasks/:id` | Update task fields or pause/resume | ✓ | 200 | 400 (invalid cron), 401, 404 |
 | `POST` | `/tasks/:id/run` | Trigger a task immediately | ✓ | 200 | 401, 404 |
 | `DELETE` | `/tasks/:id` | Remove a task | ✓ | 204 | 401, 404 |
+| `GET` | `/tasks/events` | SSE stream of task run results | ✓ (header or `?key=`) | 200 | 401 |
 
 ### Task Model
 
@@ -374,6 +381,8 @@ They're not substitutes — and nothing stops you using both.
 ### Persistence
 
 Tasks are persisted to `data/tasks.json` (path is relative to the project directory). On startup, the scheduler reads every stored task and re-registers cron jobs for all that aren't `paused` — including tasks last left in `failed` state, which will retry on their next scheduled tick. Paused tasks remain paused until you PATCH them back to `active`.
+
+On first startup, if `data/tasks.json` is missing, the scheduler initializes it by copying from `data/tasks.seed.json` — a committed file containing factory-default tasks (currently a sample `timetemp` task). The live `tasks.json` is gitignored so runtime updates don't dirty your working tree; the seed file is the source of truth that's shared across clones. To reset to factory defaults: stop the server, delete `data/tasks.json`, and restart.
 
 ## Authentication
 
@@ -474,6 +483,30 @@ The HTTP request blocks until the command finishes (or hits the 60-second timeou
 ### Delete a task
 ```
 DELETE /tasks/:id
+```
+
+---
+
+### Subscribe to task run events (SSE)
+```
+GET /tasks/events
+```
+
+Returns a `text/event-stream`. Each task completion (scheduled or manually triggered) emits one `data: <json>` message:
+
+```json
+{
+  "taskId": "uuid",
+  "task": { "...full task object including lastResult..." }
+}
+```
+
+The connection stays open; a `: ping` keepalive comment is sent every 30 seconds.
+
+**Authentication:** in addition to the standard `x-api-key` header, this endpoint also accepts the key as a `?key=<API-KEY>` query parameter. That's because browser `EventSource` clients cannot set custom request headers — so the bundled viewer page authenticates via query string. Header auth still works for non-browser clients:
+
+```bash
+curl -N -H "x-api-key: $KEY" $HOST/tasks/events
 ```
 
 ## Security
