@@ -1,0 +1,12 @@
+{
+  "717f35ed-de17-4a4f-b53d-5cb8d877ceb3": {
+    "id": "717f35ed-de17-4a4f-b53d-5cb8d877ceb3",
+    "name": "timetemp",
+    "schedule": "* * * * *",
+    "command": "claude -p 'Use curl on wttr.in to get current Pflugerville TX weather. Reply with EXACTLY one line in this format: \"Pflugerville, TX — HH:MM CDT, +TT°F, <conditions>\". No markdown, no emoji, no extra lines.' --allowed-tools \"Bash(curl:*)\" < /dev/null",
+    "status": "active",
+    "createdAt": "2026-05-05T17:45:21.287Z",
+    "lastRun": null,
+    "lastResult": null
+  }
+}

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Task Scheduler — Live Events</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; background: #1a1a1a; color: #ddd; }
+    header { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    h1 { font-size: 1.1rem; margin: 0; flex: 1; }
+    input { padding: .35rem .5rem; border: 1px solid #444; background: #222; color: #ddd; border-radius: 3px; font-family: ui-monospace, monospace; }
+    button { padding: .35rem .75rem; border: 1px solid #444; background: #2a2a2a; color: #ddd; border-radius: 3px; cursor: pointer; }
+    button:hover { background: #333; }
+    label { font-size: .85rem; color: #aaa; display: flex; gap: .35rem; align-items: center; }
+    #status { font-size: .85rem; padding: .25rem .6rem; border-radius: 3px; }
+    #status.connected { background: #1f4d2c; color: #b6f0c2; }
+    #status.disconnected { background: #5a1f1f; color: #f0b6b6; }
+    #log { display: flex; flex-direction: column; gap: .5rem; }
+    .event { background: #222; border-left: 3px solid #4a90e2; padding: .5rem .75rem; border-radius: 3px; font-family: ui-monospace, monospace; font-size: .85rem; }
+    .event.fail { border-left-color: #e25555; }
+    .event-head { display: flex; gap: .75rem; align-items: baseline; margin-bottom: .25rem; }
+    .event-name { font-weight: bold; color: #fff; }
+    .event-time { color: #888; }
+    .event-code { margin-left: auto; padding: 0 .4rem; border-radius: 3px; background: #1f4d2c; color: #b6f0c2; }
+    .event-code.fail { background: #5a1f1f; color: #f0b6b6; }
+    pre { margin: .25rem 0 0; white-space: pre-wrap; word-break: break-word; color: #bbb; }
+    pre.stderr { color: #f0b6b6; }
+    .empty { color: #666; font-style: italic; padding: 2rem 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Task Scheduler — Live Events</h1>
+    <label>API key: <input id="key" value="dev-key-change-me" size="22"></label>
+    <button id="connect">Reconnect</button>
+    <span id="status" class="disconnected">Disconnected</span>
+  </header>
+  <div id="log"><div class="empty">Waiting for task events…</div></div>
+  <script>
+    const $log = document.getElementById('log');
+    const $status = document.getElementById('status');
+    const $key = document.getElementById('key');
+    const $connect = document.getElementById('connect');
+    let es = null;
+    let firstEvent = true;
+
+    function setStatus(text, cls) {
+      $status.textContent = text;
+      $status.className = cls;
+    }
+
+    function fmtTime(iso) {
+      return iso ? new Date(iso).toLocaleTimeString() : '';
+    }
+
+    function appendEvent({ task }) {
+      if (firstEvent) {
+        $log.innerHTML = '';
+        firstEvent = false;
+      }
+      const r = task.lastResult || {};
+      const failed = r.exitCode !== 0;
+
+      const div = document.createElement('div');
+      div.className = 'event' + (failed ? ' fail' : '');
+
+      const head = document.createElement('div');
+      head.className = 'event-head';
+
+      const name = document.createElement('span');
+      name.className = 'event-name';
+      name.textContent = task.name;
+
+      const time = document.createElement('span');
+      time.className = 'event-time';
+      time.textContent = fmtTime(r.startedAt);
+
+      const code = document.createElement('span');
+      code.className = 'event-code' + (failed ? ' fail' : '');
+      code.textContent = 'exit ' + (r.exitCode ?? '?');
+
+      head.append(name, time, code);
+      div.append(head);
+
+      if (r.stdout) {
+        const pre = document.createElement('pre');
+        pre.className = 'stdout';
+        pre.textContent = r.stdout;
+        div.append(pre);
+      }
+      if (r.stderr) {
+        const pre = document.createElement('pre');
+        pre.className = 'stderr';
+        pre.textContent = r.stderr;
+        div.append(pre);
+      }
+
+      $log.prepend(div);
+    }
+
+    function connect() {
+      if (es) es.close();
+      const key = encodeURIComponent($key.value);
+      es = new EventSource('/tasks/events?key=' + key);
+      es.onopen = () => setStatus('Connected', 'connected');
+      es.onerror = () => setStatus('Disconnected', 'disconnected');
+      es.onmessage = (e) => {
+        try {
+          appendEvent(JSON.parse(e.data));
+        } catch (err) {
+          console.error('Bad event payload', err, e.data);
+        }
+      };
+    }
+
+    $connect.addEventListener('click', connect);
+    connect();
+  </script>
+</body>
+</html>

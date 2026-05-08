@@ -1,7 +1,10 @@
 import express from 'express';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { initScheduler } from './lib/scheduler.js';
 import taskRoutes from './routes/tasks.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -9,6 +12,10 @@ const API_KEY = process.env.API_KEY || 'dev-key-change-me';
 
 // Middleware
 app.use(express.json());
+
+// Static viewer page (registered before auth so it loads without a key;
+// the page authenticates the SSE connection via ?key= query param).
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Auth middleware
 app.use((req, res, next) => {
