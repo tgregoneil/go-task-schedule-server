@@ -2,7 +2,7 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import cron from 'node-cron';
 import * as store from '../lib/store.js';
-import { scheduleTask, unscheduleTask, runTask } from '../lib/scheduler.js';
+import { scheduleTask, unscheduleTask, runTask, taskEvents } from '../lib/scheduler.js';
 
 const router = express.Router();
 
@@ -38,6 +38,26 @@ router.post('/', (req, res) => {
 // GET /tasks — list all tasks
 router.get('/', (req, res) => {
   res.json(store.getAll());
+});
+
+// GET /tasks/events — SSE stream of task run results
+router.get('/events', (req, res) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+  res.flushHeaders();
+
+  const onRun = (payload) => res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  taskEvents.on('run', onRun);
+
+  const keepalive = setInterval(() => res.write(': ping\n\n'), 30000);
+
+  req.on('close', () => {
+    clearInterval(keepalive);
+    taskEvents.off('run', onRun);
+  });
 });
 
 // GET /tasks/:id — get one task

@@ -13,7 +13,7 @@ app.use(express.json());
 // Auth middleware
 app.use((req, res, next) => {
   if (req.path === '/health') return next(); // health check is public
-  const key = req.headers['x-api-key'];
+  const key = req.headers['x-api-key'] || req.query.key;
   if (!key || key !== API_KEY) {
     return res.status(401).json({ error: 'Invalid or missing API key' });
   }
