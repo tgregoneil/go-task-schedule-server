@@ -1,6 +1,6 @@
 # Task Scheduler API
 
-A local network based Node.js task scheduler with a REST API. This is a general-purpose scheduler that runs backups, health checks, rsync, report generation, etc.
+A self-hosted task scheduler that runs arbitrary shell commands on cron — `rsync`, `pg_dump`, a Python script, a healthcheck, a `claude -p` prompt — with a live SSE-driven dashboard and a REST API. Because it runs on your LAN, tasks can reach a local database, NAS, internal service, or sensor, and outputs stay local.
 
 *Runs on Linux, macOS, and Windows. Requires Node.js 18+.*
 
