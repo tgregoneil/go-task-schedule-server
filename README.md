@@ -1,6 +1,6 @@
 # Task Scheduler API
 
-A local network based Node.js task scheduler with a REST API.
+A local network based Node.js task scheduler with a REST API. This is a general-purpose scheduler that runs backups, health checks, rsync, report generation, etc.
 
 *Runs on Linux, macOS, and Windows. Requires Node.js 18+.*
 
