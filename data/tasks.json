@@ -1,0 +1,34 @@
+{
+  "fc07f7ca-e6a5-435d-91c5-09b13f2e2ca3": {
+    "id": "fc07f7ca-e6a5-435d-91c5-09b13f2e2ca3",
+    "name": "heartbeat",
+    "schedule": "* * * * *",
+    "command": "echo \"alive at $(date)\"",
+    "status": "active",
+    "createdAt": "2026-05-05T17:14:14.601Z",
+    "lastRun": "2026-05-05T17:58:00.011Z",
+    "lastResult": {
+      "startedAt": "2026-05-05T17:58:00.011Z",
+      "completedAt": "2026-05-05T17:58:00.018Z",
+      "exitCode": 0,
+      "stdout": "alive at Tue May  5 12:58:00 PM CDT 2026",
+      "stderr": ""
+    }
+  },
+  "717f35ed-de17-4a4f-b53d-5cb8d877ceb3": {
+    "id": "717f35ed-de17-4a4f-b53d-5cb8d877ceb3",
+    "name": "timetemp",
+    "schedule": "* * * * *",
+    "command": "claude -p \"show time and current temp in Pflugerville,TX using curl\" --allowed-tools \"Bash(curl:*)\"",
+    "status": "active",
+    "createdAt": "2026-05-05T17:45:21.287Z",
+    "lastRun": "2026-05-05T17:56:00.012Z",
+    "lastResult": {
+      "startedAt": "2026-05-05T17:56:00.012Z",
+      "completedAt": "2026-05-05T17:56:22.297Z",
+      "exitCode": 0,
+      "stdout": "**Pflugerville, TX** — 12:56:20 CDT, ☁️ 73°F",
+      "stderr": "Warning: no stdin data received in 3s, proceeding without it. If piping from a slow command, redirect stdin explicitly: < /dev/null to skip, or wait longer."
+    }
+  }
+}
