@@ -121,7 +121,7 @@ If you're hitting the server from another machine on your LAN, replace `localhos
 
 ### 1. Health check (no auth needed)
 ```bash
-curl $HOST/health
+curl $HOST/health | jq
 ```
 
 ### 2. Create a task that runs every minute
@@ -135,7 +135,7 @@ curl -X POST $HOST/tasks \
     "name": "heartbeat",
     "schedule": "* * * * *",
     "command": "echo \"alive at $(date)\""
-  }'
+  }' | jq
 ```
 
 Windows:
@@ -143,37 +143,37 @@ Windows:
 curl -X POST %HOST%/tasks ^
   -H "Content-Type: application/json" ^
   -H "x-api-key: %KEY%" ^
-  -d "{\"name\":\"heartbeat\",\"schedule\":\"* * * * *\",\"command\":\"echo alive at %DATE% %TIME%\"}"
+  -d "{\"name\":\"heartbeat\",\"schedule\":\"* * * * *\",\"command\":\"echo alive at %DATE% %TIME%\"}" | jq
 ```
 
 Windows PowerShell:
 ```powershell
-curl -X POST $HOST/tasks `
+curl.exe -X POST $HOST/tasks `
   -H "Content-Type: application/json" `
   -H "x-api-key: $KEY" `
-  -d '{"name":"heartbeat","schedule":"* * * * *","command":"powershell -Command \"echo (Get-Date)\""}'
+  -d '{"name":"heartbeat","schedule":"* * * * *","command":"powershell -Command \"echo (Get-Date)\""}' | jq
 ```
 Copy the `id` from the response — you'll need it. Or use the next command to grab it.
 
 ### 3. List all tasks
 ```bash
-curl $HOST/tasks -H "x-api-key: $KEY"
+curl $HOST/tasks -H "x-api-key: $KEY" | jq
 ```
 
 Capture the ID into a variable for the rest of the walkthrough:
 ```bash
-ID=$(curl -s $HOST/tasks -H "x-api-key: $KEY" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d)[0].id))")
+ID=$(curl -s $HOST/tasks -H "x-api-key: $KEY" | jq -r '.[0].id')
 echo "Task ID: $ID"
 ```
 
 ### 4. Get one task by ID (includes output of most recently run task)
 ```bash
-curl $HOST/tasks/$ID -H "x-api-key: $KEY"
+curl $HOST/tasks/$ID -H "x-api-key: $KEY" | jq
 ```
 
 ### 5. Trigger it immediately (don't wait for cron)
 ```bash
-curl -X POST $HOST/tasks/$ID/run -H "x-api-key: $KEY"
+curl -X POST $HOST/tasks/$ID/run -H "x-api-key: $KEY" | jq
 ```
 
 ### 6. Pause the task
@@ -181,7 +181,7 @@ curl -X POST $HOST/tasks/$ID/run -H "x-api-key: $KEY"
 curl -X PATCH $HOST/tasks/$ID \
   -H "Content-Type: application/json" \
   -H "x-api-key: $KEY" \
-  -d '{"status": "paused"}'
+  -d '{"status": "paused"}' | jq
 ```
 
 ### 7. Reschedule it (every 5 minutes instead) and reactivate
@@ -189,7 +189,7 @@ curl -X PATCH $HOST/tasks/$ID \
 curl -X PATCH $HOST/tasks/$ID \
   -H "Content-Type: application/json" \
   -H "x-api-key: $KEY" \
-  -d '{"schedule": "*/5 * * * *", "status": "active"}'
+  -d '{"schedule": "*/5 * * * *", "status": "active"}' | jq
 ```
 
 ### 8. Try a deliberately failing command (to see error capture)
@@ -201,13 +201,13 @@ curl -X POST $HOST/tasks \
     "name": "broken",
     "schedule": "* * * * *",
     "command": "exit 42"
-  }'
+  }' | jq
 ```
 Then trigger it and inspect `lastResult.exitCode` and `lastResult.stderr`.
 
 ### 9. Test auth rejection
 ```bash
-curl $HOST/tasks
+curl $HOST/tasks | jq
 # should return 401
 ```
 
@@ -216,31 +216,31 @@ curl $HOST/tasks
 curl -X POST $HOST/tasks \
   -H "Content-Type: application/json" \
   -H "x-api-key: $KEY" \
-  -d '{"name":"bad","schedule":"not-a-cron","command":"echo hi"}'
+  -d '{"name":"bad","schedule":"not-a-cron","command":"echo hi"}' | jq
 # should return 400
 ```
 
 ### 11. Delete the task
 ```bash
 curl -X DELETE $HOST/tasks/$ID -H "x-api-key: $KEY"
-# returns 204 (no body)
+# returns 204 (no body — nothing to pipe to jq)
 ```
 
 ### 12. Confirm it's gone
 ```bash
-curl $HOST/tasks -H "x-api-key: $KEY"
+curl $HOST/tasks -H "x-api-key: $KEY" | jq
 ```
 
 ---
 
-**Tip:** pipe any JSON response through `jq` for readable output:
-```bash
-curl -s $HOST/tasks -H "x-api-key: $KEY" | jq
-```
-Install if you don't have it:
+**About `| jq`:** the examples above pipe each JSON response through [`jq`](https://jqlang.org) to pretty-print it. If you don't want to install jq, just drop the trailing `| jq` from any command — you'll get the same data, unformatted.
+
+Install jq if you want it:
 - Ubuntu/Debian: `sudo apt install jq`
 - macOS: `brew install jq`
 - Windows: `winget install jqlang.jq` (or `choco install jq`)
+
+**PowerShell note:** the PowerShell example uses `curl.exe` (the real curl binary) rather than bare `curl`, because PowerShell aliases `curl` to `Invoke-WebRequest`, which returns a structured object — not a text stream — and won't pipe to `jq` cleanly. Real curl ships with Windows 10+ by default; install via `winget install curl` if missing.
 
 ## Example: scheduling Claude CLI tasks
 
