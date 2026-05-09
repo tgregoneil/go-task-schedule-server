@@ -58,15 +58,15 @@ npm install
 
 Windows Firewall blocks inbound TCP 3000 by default. If you're hosting on Windows and want LAN clients to reach the service, allow it once with (admin shell):
 ```cmd
-netsh advfirewall firewall add rule name="task-scheduler" dir=in action=allow protocol=TCP localport=3000
+netsh advfirewall firewall add rule name="cron-dispatcher" dir=in action=allow protocol=TCP localport=3000
 ```
 
 ### 4. Run as a service (optional)
 
 To keep the scheduler running across reboots and logouts:
 
-- **Linux**: write a `systemd` unit at `/etc/systemd/system/task-scheduler.service`, then `sudo systemctl enable --now task-scheduler`.
-- **macOS**: write a `launchd` plist at `~/Library/LaunchAgents/task-scheduler.plist`, then `launchctl load` it.
+- **Linux**: write a `systemd` unit at `/etc/systemd/system/cron-dispatcher.service`, then `sudo systemctl enable --now cron-dispatcher`.
+- **macOS**: write a `launchd` plist at `~/Library/LaunchAgents/cron-dispatcher.plist`, then `launchctl load` it.
 - **Windows**: use [`nssm`](https://nssm.cc/) or [`node-windows`](https://github.com/coreybutler/node-windows).
 
 ## Run

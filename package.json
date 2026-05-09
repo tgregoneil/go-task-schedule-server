@@ -1,5 +1,5 @@
 {
-  "name": "task-scheduler",
+  "name": "cron-dispatcher",
   "version": "1.0.0",
   "description": "Local task scheduler with REST API",
   "main": "index.js",
